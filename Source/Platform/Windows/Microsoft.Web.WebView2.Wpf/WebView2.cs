@@ -20,6 +20,16 @@ namespace Microsoft.Web.WebView2.Wpf;
 [ToolboxItem(true)]
 public class WebView2 : HwndHost
 {
+    // Using an IP address means that WebView2 doesn't wait for any DNS resolution,
+    // making it substantially faster. Note that this isn't real HTTP traffic, since
+    // we intercept all the requests within this origin.
+    private static readonly string AppHostAddress = "0.0.0.0";
+
+    /// <summary>
+    /// Gets the application's base URI. Defaults to <c>https://0.0.0.0/</c>
+    /// </summary>
+    private static readonly string AppOrigin = $"https://{AppHostAddress}/";
+    
 	private class WebView2KeyEventArgs : KeyEventArgs
 	{
 		public WebView2KeyEventArgs(KeyboardDevice keyboard, PresentationSource inputSource, int timestamp, Key key)
@@ -272,6 +282,7 @@ public class WebView2 : HwndHost
 	public event EventHandler<CoreWebView2ContentLoadingEventArgs> ContentLoading;
 
 	public event EventHandler<CoreWebView2WebMessageReceivedEventArgs> WebMessageReceived;
+	public event EventHandler<CoreWebView2WebResourceRequestedEventArgs> WebRequestReceived;
 
 	public WebView2()
 	{
@@ -468,6 +479,8 @@ public class WebView2 : HwndHost
 				CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
 				CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
 				CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+                CoreWebView2.AddWebResourceRequestedFilter($"{AppOrigin}*", CoreWebView2WebResourceContext.All);
+                CoreWebView2.WebResourceRequested += CoreWebView2_WebRequestReceived;
 				try
 				{
 					RegisterProfileDeletedEvent(register: true, CoreWebView2);
@@ -921,4 +934,9 @@ public class WebView2 : HwndHost
 	{
 		this.WebMessageReceived?.Invoke(this, e);
 	}
+    
+    private void CoreWebView2_WebRequestReceived(object sender, CoreWebView2WebResourceRequestedEventArgs e)
+    {
+        this.WebRequestReceived?.Invoke(this, e);
+    }
 }

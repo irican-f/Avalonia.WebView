@@ -37,5 +37,4 @@ partial class WebView
 
         return _platformWebView.NavigateToString(htmlContent!);
     }
-
 }

@@ -15,7 +15,7 @@ partial class WebView
         {
             var newValue = e.NewValue.Value;
             await s.NavigateToString(newValue);
-        });
+        }); 
 
         return true;
     }
@@ -25,7 +25,7 @@ partial class WebView
 
     public static readonly StyledProperty<string?> HtmlContentProperty =
            AvaloniaProperty.Register<WebView, string?>(nameof(HtmlContent));
-
+    
     public Uri? Url
     {
         get => GetValue(UrlProperty);
@@ -37,5 +37,4 @@ partial class WebView
         get => GetValue(HtmlContentProperty);
         set => SetValue(HtmlContentProperty, value);
     }
-  
 }

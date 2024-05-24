@@ -1,4 +1,6 @@
-﻿namespace AvaloniaWebView;
+﻿using System.Diagnostics;
+
+namespace AvaloniaWebView;
 
 partial class WebView
 {
@@ -8,4 +10,6 @@ partial class WebView
     public event EventHandler<WebViewUrlLoadedEventArg>? NavigationCompleted;
     public event EventHandler<WebViewMessageReceivedEventArgs>? WebMessageReceived;
     public event EventHandler<WebViewNewWindowEventArgs>? WebViewNewWindowRequested;
+    public event EventHandler<WebViewRequestEventArgs>? WebResourceRequestReceived;
+    public event Func<WebViewRequestEventArgs, Task>? ProxyRequestReceived;
 }

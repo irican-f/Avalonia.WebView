@@ -32,6 +32,7 @@ partial class WebView
             config.ProfileName = _creationProperties.ProfileName;
             config.IsInPrivateModeEnabled = _creationProperties.IsInPrivateModeEnabled;
             config.DefaultWebViewBackgroundColor = _creationProperties.DefaultWebViewBackgroundColor;
+            config.AssetRootFolder = _creationProperties.AssetRootFolder;
         });
 
         if (viewHandler is null)

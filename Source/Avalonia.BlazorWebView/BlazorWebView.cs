@@ -45,7 +45,6 @@ public sealed partial class BlazorWebView : Control, IVirtualWebView<BlazorWebVi
         _startAddress = setting.Value.StartAddress;
 
         RootComponents.CollectionChanged += RootComponents_CollectionChanged;
-
     }
 
     readonly WebViewCreationProperties _creationProperties;

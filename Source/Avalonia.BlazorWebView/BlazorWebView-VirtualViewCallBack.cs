@@ -34,4 +34,15 @@ partial class BlazorWebView
         WebViewNewWindowRequested?.Invoke(sender, arg);
         return true;
     }
+
+    public bool PlatformWebResourceRequestReceived(object? sender, WebViewRequestEventArgs arg)
+    {
+        WebResourceRequestReceived?.Invoke(sender, arg);
+        return true;
+    }
+
+    public Task PlatformProxyRequestReceived(WebViewRequestEventArgs arg)
+    {
+        return ProxyRequestReceived != null ? ProxyRequestReceived?.Invoke(arg)! : Task.CompletedTask;
+    }
 }

@@ -4,6 +4,20 @@ namespace Avalonia.WebView.Windows.Core;
 
 partial class WebView2Core
 {
+    // Using an IP address means that WebView2 doesn't wait for any DNS resolution,
+    // making it substantially faster. Note that this isn't real HTTP traffic, since
+    // we intercept all the requests within this origin.
+    private static readonly string AppHostAddress = "0.0.0.0";
+
+    /// <summary>
+    /// Gets the application's base URI. Defaults to <c>https://0.0.0.0/</c>
+    /// </summary>
+    private static readonly string AppOrigin = $"https://{AppHostAddress}/";
+    
+    private static readonly Uri AppOriginUri = new(AppOrigin);
+    
+    private const string ProxyRequestPath = "proxy";
+    
     void RegisterEvents()
     {
         _handler.SizeChanged += HostControl_SizeChanged;
@@ -44,6 +58,8 @@ partial class WebView2Core
         corewebview2.WebResourceRequested += CoreWebView2_WebResourceRequested;
         corewebview2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
         corewebview2.Profile.Deleted += Profile_Deleted;
+        
+        corewebview2.AddWebResourceRequestedFilter($"{AppOrigin}*", CoreWebView2WebResourceContext.All);
     }
 
     void UnregisterWebViewEvents(CoreWebView2Controller coreWebView2Controller, bool browserCrashed = false)
@@ -101,5 +117,5 @@ partial class WebView2Core
         }
     }
 
-
+    
 }
