@@ -149,7 +149,8 @@ partial class WebView2Core
     
     private protected static string GetHeaderString(string? contentType, int contentLength) =>
 $@"Content-Type: {contentType}
-Content-Length: {contentLength}";
+Content-Length: {contentLength}
+Access-Control-Allow-Origin: *";
     
     private async Task OnProxyRequestMessage(WebViewRequestEventArgs args)
     {
@@ -158,6 +159,10 @@ Content-Length: {contentLength}";
     
     private void HandleAssetRequest(Uri uri, WebViewRequestEventArgs e)
     {
+#if DEBUG
+        return;
+#endif
+        
         if (string.IsNullOrEmpty(_creationProperties.AssetRootFolder))
         {
             return;
