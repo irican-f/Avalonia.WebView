@@ -32,16 +32,20 @@ partial class WebView2Core
             {
                 CoreWebView2Environment environment3 = environment2;
                 CoreWebView2Controller coreWebView2Controller = await environment3.CreateCoreWebView2ControllerAsync(intPtr, options).ConfigureAwait(true);
+                CoreWebView2CompositionController coreWebView2CompositionController = await environment3.CreateCoreWebView2CompositionControllerAsync(intPtr, options);
                 _coreWebView2Controller = coreWebView2Controller;
+                _coreWebView2CompositionController = coreWebView2CompositionController;
                 _controllerOptions = options;
             }
             else
             {
                 CoreWebView2Environment environment3 = environment2;
                 CoreWebView2Controller coreWebView2Controller = await environment3.CreateCoreWebView2ControllerAsync(intPtr).ConfigureAwait(true);
+                CoreWebView2CompositionController coreWebView2CompositionController = await environment3.CreateCoreWebView2CompositionControllerAsync(intPtr);
                 _coreWebView2Controller = coreWebView2Controller;
+                _coreWebView2CompositionController = coreWebView2CompositionController;
             }
-
+            
             var coreWebView2 = _coreWebView2Controller.CoreWebView2;
             if (coreWebView2 is null)
                 throw new ArgumentNullException(nameof(coreWebView2), "coreWebView2 is null!");
@@ -223,6 +227,7 @@ partial class WebView2Core
 
                 _controllerOptions = null;
                 _coreWebView2Controller = null;
+                _coreWebView2CompositionController = null;
                 _coreWebView2Environment = null;
             }
  

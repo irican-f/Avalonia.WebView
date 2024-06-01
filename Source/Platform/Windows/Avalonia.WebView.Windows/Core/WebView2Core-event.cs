@@ -42,7 +42,7 @@ partial class WebView2Core
         coreWebView2Controller.LostFocus += CoreWebView2Controller_LostFocus;
         coreWebView2Controller.MoveFocusRequested += CoreWebView2Controller_MoveFocusRequested;
         coreWebView2Controller.ZoomFactorChanged += CoreWebView2Controller_ZoomFactorChanged;
-
+        
         var corewebview2 = coreWebView2Controller.CoreWebView2;
         if (corewebview2 is null)
             return;

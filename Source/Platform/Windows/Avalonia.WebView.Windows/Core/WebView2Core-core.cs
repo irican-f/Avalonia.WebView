@@ -30,11 +30,11 @@ partial class WebView2Core
         var coreWebView2ControllerOptions = environment.CreateCoreWebView2ControllerOptions();
         coreWebView2ControllerOptions.ProfileName = _creationProperties.ProfileName!;
         coreWebView2ControllerOptions.IsInPrivateModeEnabled = _creationProperties.IsInPrivateModeEnabled.GetValueOrDefault();
-
+        
         return coreWebView2ControllerOptions;
     }
-
-    void SetEnvirmentDefaultBackground(Color color) => Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", color.Name);
+    
+    void SetEnvironmentDefaultBackground(Color color) => Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", color.Name);
 
     Task PrepareBlazorWebViewStarting(IVirtualBlazorWebViewProvider provider, CoreWebView2 coreWebView2)
     {
@@ -79,7 +79,7 @@ partial class WebView2Core
             
             if (relativePath == ProxyRequestPath)
             {
-                var args = new WebViewRequestEventArgs(e.Request.Uri);
+                var args = new WebViewRequestEventArgs(e.Request.Uri, e.Request.Content);
                 await OnProxyRequestMessage(args);
 
                 if (args.ResponseStream != null)
@@ -91,7 +91,7 @@ partial class WebView2Core
             
             if (contentStream is null)
             {
-                var args = new WebViewRequestEventArgs(e.Request.Uri);
+                var args = new WebViewRequestEventArgs(e.Request.Uri, e.Request.Content);
                 HandleAssetRequest(uri, args);
                 
                 contentType = args.ResponseContentType ?? "text/plain";
@@ -228,6 +228,14 @@ Access-Control-Allow-Origin: *";
         try
         {
             await coreWebView2.ExecuteScriptAsync(BlazorScriptHelper.BlazorStaredScript);
+            
+            // Inject a script to handle file drop in your web content
+            await coreWebView2.ExecuteScriptAsync(@"
+                window.handleFileDrop = (filePath) => {
+                    console.log('File dropped: ' + filePath);
+                    // Handle the file drop in your web content
+                };
+            ");
         }
         catch (Exception)
         {

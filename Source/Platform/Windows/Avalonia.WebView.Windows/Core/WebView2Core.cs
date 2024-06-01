@@ -16,7 +16,7 @@ public partial class WebView2Core : IPlatformWebView<WebView2Core>
             _hwndTaskSource.SetResult(handler.RefHandler.Handle);
         }
 
-        SetEnvirmentDefaultBackground(webViewCreationProperties.DefaultWebViewBackgroundColor);
+        SetEnvironmentDefaultBackground(webViewCreationProperties.DefaultWebViewBackgroundColor);
         RegisterEvents();
     }
 
@@ -52,6 +52,7 @@ public partial class WebView2Core : IPlatformWebView<WebView2Core>
  
     CoreWebView2Environment? _coreWebView2Environment { get; set; }
     CoreWebView2Controller? _coreWebView2Controller { get; set; }
+    CoreWebView2CompositionController? _coreWebView2CompositionController { get; set; }
     CoreWebView2ControllerOptions? _controllerOptions { get; set; }
 
     [Browsable(false)]

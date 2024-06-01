@@ -1,4 +1,6 @@
-﻿namespace AvaloniaWebView;
+﻿using Avalonia.Input;
+
+namespace AvaloniaWebView;
 
 partial class WebView
 {
