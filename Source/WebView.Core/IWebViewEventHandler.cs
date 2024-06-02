@@ -15,4 +15,6 @@ public interface IWebViewEventHandler
     event EventHandler<WebViewNewWindowEventArgs>? WebViewNewWindowRequested;
     event EventHandler<WebViewRequestEventArgs>? WebResourceRequestReceived;
     public event Func<WebViewRequestEventArgs, Task>? ProxyRequestReceived;
+    event EventHandler<List<string>>? WebViewFilesDropped;
+
 }

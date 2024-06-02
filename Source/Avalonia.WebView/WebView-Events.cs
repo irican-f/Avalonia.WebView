@@ -12,4 +12,6 @@ partial class WebView
     public event EventHandler<WebViewNewWindowEventArgs>? WebViewNewWindowRequested;
     public event EventHandler<WebViewRequestEventArgs>? WebResourceRequestReceived;
     public event Func<WebViewRequestEventArgs, Task>? ProxyRequestReceived;
+    public event EventHandler<List<string>>? WebViewFilesDropped;
+
 }

@@ -19,4 +19,5 @@ public interface IVirtualWebViewControlCallBack
 
     Task PlatformProxyRequestReceived(WebViewRequestEventArgs arg);
 
+    void PlatformWebViewFilesDropped(object? sender, List<string> filePaths);
 }

@@ -66,8 +66,9 @@ partial class WebView2Core
     {
         if (_coreWebView2Environment is null)
             return;
+
+        using var deferral = e.GetDeferral();
         
-        // Get a deferral object so that WebView2 knows there's some async stuff going on. We call Complete() at the end of this method.
         // using var deferral = e.GetDeferral();
         var requestUri = QueryStringHelper.RemovePossibleQueryString(e.Request.Uri);
         
@@ -120,8 +121,7 @@ partial class WebView2Core
 
             contentStream?.Dispose();
         }
-
-        // deferral.Complete();
+        
         
         if (_provider is null)
             return;
@@ -145,6 +145,8 @@ partial class WebView2Core
 
         var headerString = GetHeaderString(response.Headers);
         e.Response = _coreWebView2Environment.CreateWebResourceResponse(response.Content, response.StatusCode, response.StatusMessage, headerString);
+        
+        deferral.Complete();
     }
     
     private protected static string GetHeaderString(string? contentType, int contentLength) =>
@@ -252,8 +254,26 @@ Access-Control-Allow-Origin: *";
             Source = new Uri(e.Source),
             RawArgs = e,
         };
+        
         _callBack.PlatformWebViewMessageReceived(this, message);
         _provider?.PlatformWebViewMessageReceived(this, message);
+
+        try
+        {
+            var filePaths = e.AdditionalObjects
+                .Where(x => x is CoreWebView2File)
+                .Select(x => ((CoreWebView2File)x).Path)
+                .ToList();
+
+            if (filePaths.Any())
+            {
+                _callBack.PlatformWebViewFilesDropped(this, filePaths);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Failed to load files");
+        }
     }
 
     private void CoreWebView2_SourceChanged(object sender, CoreWebView2SourceChangedEventArgs e)

@@ -45,4 +45,9 @@ partial class WebView
     {
         return ProxyRequestReceived != null ? ProxyRequestReceived?.Invoke(arg)! : Task.CompletedTask;
     }
+
+    public void PlatformWebViewFilesDropped(object? sender, List<string> filePaths)
+    {
+        WebViewFilesDropped?.Invoke(sender, filePaths);
+    }
 }
