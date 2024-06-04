@@ -47,18 +47,6 @@ partial class WebView
         _partInnerContainer.Child = control;
         _platformWebView = viewHandler.PlatformWebView;
         
-        DragDrop.SetAllowDrop(control, true);
-        control.AddHandler(DragDrop.DropEvent, (sender, args) =>
-        {
-            Console.WriteLine("Drop file webview");
-        });
-        
-        DragDrop.SetAllowDrop(this, true);
-        AddHandler(DragDrop.DropEvent, (sender, args) =>
-        {
-            Console.WriteLine("Drop file webview 2");
-        });
-        
         await Navigate(Url);
         await NavigateToString(HtmlContent);
     }

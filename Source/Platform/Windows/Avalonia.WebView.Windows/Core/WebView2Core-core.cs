@@ -161,10 +161,6 @@ Access-Control-Allow-Origin: *";
     
     private void HandleAssetRequest(Uri uri, WebViewRequestEventArgs e)
     {
-#if DEBUG
-        return;
-#endif
-        
         if (string.IsNullOrEmpty(_creationProperties.AssetRootFolder))
         {
             return;
