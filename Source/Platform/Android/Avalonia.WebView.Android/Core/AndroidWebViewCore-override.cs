@@ -16,13 +16,21 @@ partial class AndroidWebViewCore
 
     Task<string?> IWebViewControl.ExecuteScriptAsync(string javaScript)
     {
-        _webView.EvaluateJavascript(javaScript, new JavaScriptValueCallback(result =>
+        var taskCompletionSource = new TaskCompletionSource<string?>();
+
+        // Ensure the evaluation happens on the main thread
+        var mainHandler = new Handler(Looper.MainLooper!);
+
+        mainHandler.Post(() =>
         {
+            _webView.EvaluateJavascript(javaScript, new JavaScriptValueCallback(result =>
+            {
+                taskCompletionSource.SetResult(result?.ToString() ?? string.Empty);
+            }));
+        });
 
+        return taskCompletionSource.Task;
 
-        }));
-        
-        return Task.FromResult(string.Empty)!;
     }
 
     bool IWebViewControl.GoBack()

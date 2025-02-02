@@ -16,7 +16,7 @@ public class CustomWebViewClient : WebViewClient
         { ".png", "image/png" },
         { ".svg", "image/svg+xml" }
     };
-    
+
     // Using an IP address means that WebView2 doesn't wait for any DNS resolution,
     // making it substantially faster. Note that this isn't real HTTP traffic, since
     // we intercept all the requests within this origin.
@@ -26,9 +26,9 @@ public class CustomWebViewClient : WebViewClient
     /// Gets the application's base URI. Defaults to <c>https://0.0.0.0/</c>
     /// </summary>
     private static readonly string AppOrigin = $"https://{AppHostAddress}/";
-    
+
     private static readonly Uri AppOriginUri = new(AppOrigin);
-    
+
     private const string ProxyRequestPath = "proxy";
 
     public CustomWebViewClient(WebViewCreationProperties creationProperties, IVirtualWebViewControlCallBack callBack)
@@ -38,7 +38,8 @@ public class CustomWebViewClient : WebViewClient
     }
 
 
-    public override AndroidWebResourceResponse? ShouldInterceptRequest(AndroidWebView? view, IWebResourceRequest? request)
+    public override AndroidWebResourceResponse? ShouldInterceptRequest(AndroidWebView? view,
+        IWebResourceRequest? request)
     {
         var contentType = "text/plain";
         var requestUri = request?.Url?.ToString() ?? string.Empty;
@@ -49,20 +50,19 @@ public class CustomWebViewClient : WebViewClient
         }
 
         var relativePath = AppOriginUri.MakeRelativeUri(uri).ToString().Replace('/', '\\');
-        var relativePathWithoutQuery= QueryStringHelper.RemovePossibleQueryString(requestUri).Replace(AppOrigin, string.Empty);
-        Stream? contentStream = null;
-                
-        AndroidWebResourceResponse? response = null;
-        var mainHandler = new Handler(Looper.MainLooper!);
+        var relativePathWithoutQuery =
+            QueryStringHelper.RemovePossibleQueryString(requestUri).Replace(AppOrigin, string.Empty);
 
-        // Run code on the main thread
-        mainHandler.Post(() =>
+        var completionSource = new TaskCompletionSource<AndroidWebResourceResponse?>();
+
+        Task.Run(async () =>
         {
+            Stream? contentStream = null;
+
             if (relativePathWithoutQuery == ProxyRequestPath)
             {
                 var args = new WebViewRequestEventArgs(request.Url?.ToString() ?? string.Empty, new MemoryStream());
-
-                OnProxyRequestMessage(args).Wait();
+                await OnProxyRequestMessage(args); // Non-blocking API call.
 
                 if (args.ResponseStream != null)
                 {
@@ -70,7 +70,7 @@ public class CustomWebViewClient : WebViewClient
                     contentStream = args.ResponseStream;
                 }
             }
-        
+
             if (contentStream is null)
             {
                 var args = new WebViewRequestEventArgs(request.Url?.ToString() ?? string.Empty, new MemoryStream());
@@ -80,69 +80,66 @@ public class CustomWebViewClient : WebViewClient
                 contentStream = args.ResponseStream;
             }
 
-            // Make sure the response is constructed in the main thread
-            response = new AndroidWebResourceResponse(
-                contentType, 
+            // Construct the response (this can now run off the main thread).
+            var response = new AndroidWebResourceResponse(
+                contentType,
                 "UTF-8",
-                200, 
-                "OK", 
+                200,
+                "OK",
                 new Dictionary<string, string>
                 {
-                    {"Access-Control-Allow-Origin", "*"},
-                    {"Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE"},
-                    {"Access-Control-Allow-Headers", "*"}
+                    { "Access-Control-Allow-Origin", "*" },
+                    { "Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE" },
+                    { "Access-Control-Allow-Headers", "*" }
                 },
                 contentStream);
+
+            completionSource.SetResult(response);
         });
 
-        // Wait for the response to be prepared on the main thread
-        while (response == null)
-        {
-            Thread.Sleep(10);
-        }
-
-        return response;
+        // Wait for the background task to complete.
+        return completionSource.Task.Result;
     }
-    
+
     private void HandleAssetRequest(Uri uri, WebViewRequestEventArgs e)
     {
         if (_creationProperties == null || string.IsNullOrEmpty(_creationProperties.AssetRootFolder))
         {
             return;
         }
-        
+
         var req = uri.LocalPath;
         var filePath = Path.Combine(
             _creationProperties.AssetRootFolder!,
             Path.Combine(req.Split('/'))
         );
-    
+
         var assembly = _creationProperties.ResourceAssembly;
 
         if (assembly is null)
         {
             return;
         }
-        
+
         var fileExtension = Path.GetExtension(filePath);
         var resourceName = $"{assembly.GetName().Name}.{_creationProperties.AssetRootFolder}{req.Replace('/', '.')}";
-        
+
         if (!MimeTypes.TryGetValue(fileExtension, out var mimeType))
         {
             return;
         }
-        
+
         e.ResponseContentType = mimeType;
         e.ResponseStream = assembly.GetManifestResourceStream(resourceName);
     }
-    
+
     private async Task OnProxyRequestMessage(WebViewRequestEventArgs args)
     {
         if (_callBack is null)
         {
             return;
         }
-        
+
         await _callBack.PlatformProxyRequestReceived(args);
     }
 }
