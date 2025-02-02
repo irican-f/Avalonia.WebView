@@ -2,7 +2,6 @@
 
 	<PropertyGroup>
 		<TargetFramework>net9.0-android</TargetFramework>
-		<AndroidSdkDirectory>C:\Users\Regency\AppData\Local\Android\Sdk</AndroidSdkDirectory>
 		<ImplicitUsings>true</ImplicitUsings>
 	</PropertyGroup>
 
