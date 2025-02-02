@@ -171,22 +171,32 @@ Access-Control-Allow-Origin: *";
             _creationProperties.AssetRootFolder!,
             Path.Combine(req.Split('/'))
         );
-    
-        if (!File.Exists(filePath))
-        {
-            return;
-        }
-    
-        var fileExtension = Path.GetExtension(filePath);
-        var fileContent = File.ReadAllBytes(filePath);
 
+        var fileExtension = Path.GetExtension(filePath);
+        
         if (!MimeTypes.TryGetValue(fileExtension, out var mimeType))
         {
             return;
         }
         
         e.ResponseContentType = mimeType;
-        e.ResponseStream = new MemoryStream(fileContent);
+        
+        if (File.Exists(filePath))
+        {
+            e.ResponseStream = new MemoryStream(File.ReadAllBytes(filePath));
+            return;
+        }
+        
+        var assembly = _creationProperties.ResourceAssembly;
+
+        if (assembly is null)
+        {
+            return;
+        }
+        
+        filePath = $"{assembly.GetName().Name}.{_creationProperties.AssetRootFolder}{req.Replace('/', '.')}";
+        
+        e.ResponseStream = assembly.GetManifestResourceStream(filePath);
     }
     
     public async Task<MemoryStream> CopyContentToMemoryStreamAsync(Stream content)
