@@ -5,7 +5,7 @@ namespace Avalonia.WebView.Android.Clients;
 [SupportedOSPlatform("android23.0")]
 internal class AvaloniaWebViewClient : WebViewClient
 {
-    public AvaloniaWebViewClient(AndroidWebViewCore webViewHandler, IVirtualWebViewControlCallBack callBack, IVirtualBlazorWebViewProvider provider, WebScheme webScheme)
+    public AvaloniaWebViewClient(AndroidWebViewCore webViewHandler, IVirtualWebViewControlCallBack callBack, IVirtualBlazorWebViewProvider provider, WebScheme webScheme, WebViewCreationProperties creationProperties)
     {
         ArgumentNullException.ThrowIfNull(webViewHandler);
         ArgumentNullException.ThrowIfNull(callBack);
@@ -16,6 +16,7 @@ internal class AvaloniaWebViewClient : WebViewClient
         _provider = provider;
         _webView = webViewHandler.WebView;
         _webScheme = webScheme;
+        _creationProperties = creationProperties;
     }
 
 
@@ -31,6 +32,7 @@ internal class AvaloniaWebViewClient : WebViewClient
     readonly IVirtualWebViewControlCallBack? _callBack;
     readonly IVirtualBlazorWebViewProvider? _provider;
     readonly WebScheme? _webScheme;
+    private readonly WebViewCreationProperties? _creationProperties;
 
     bool _isStarted = false;
 
@@ -52,7 +54,6 @@ internal class AvaloniaWebViewClient : WebViewClient
                 return default;
 
             var allowFallbackOnHostPage = _webScheme.BaseUri.IsBaseOfPage(requestUri);
-
             var webRequest = new WebResourceRequest
             {
                 RequestUri = requestUri!,
@@ -76,7 +77,7 @@ internal class AvaloniaWebViewClient : WebViewClient
         else
             return ret;
     }
-
+    
     public override void OnPageFinished(AndroidWebView? view, string? url)
     {
         base.OnPageFinished(view, url);
@@ -191,5 +192,4 @@ internal class AvaloniaWebViewClient : WebViewClient
 
         webView.PostWebMessage(new WebMessage("capturePort", destPort), AndroidUri.Parse(_webScheme.BaseUri.AbsoluteUri)!);
     }
-
 }

@@ -13,7 +13,7 @@ partial class AndroidWebViewCore
         if (!provider.ResourceRequestedFilterProvider(this, out var filter))
             return Task.FromResult(false);
 
-        _webViewClient = new AvaloniaWebViewClient(this, _callBack, provider, filter);
+        _webViewClient = new AvaloniaWebViewClient(this, _callBack, provider, filter, _creationProperties);
         _webChromeClient = new AvaloniaWebChromeClient(this);
         webView.SetWebViewClient(_webViewClient);
         webView.SetWebChromeClient(_webChromeClient);

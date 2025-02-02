@@ -15,5 +15,9 @@ public interface IVirtualWebViewControlCallBack
 
     bool PlatformWebViewNewWindowRequest(object? sender, WebViewNewWindowEventArgs arg);
 
+    bool PlatformWebResourceRequestReceived(object? sender, WebViewRequestEventArgs arg);
 
+    Task PlatformProxyRequestReceived(WebViewRequestEventArgs arg);
+
+    void PlatformWebViewFilesDropped(object? sender, List<string> filePaths);
 }

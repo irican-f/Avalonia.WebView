@@ -1,12 +1,20 @@
-﻿using System;
-using WebViewCore.Enums;
+﻿using WebViewCore.Enums;
 using WebViewCore.Helpers;
-using WebViewCore.Models;
 
 namespace Avalonia.WebView.Windows.Core;
 
 partial class WebView2Core
 {
+    public static readonly Dictionary<string, string> MimeTypes = new()
+    {
+        { ".html", "text/html" },
+        { ".js", "application/javascript" },
+        { ".css", "text/css" },
+        { ".ttf", "font/ttf" },
+        { ".png", "image/png" },
+        { ".svg", "image/svg+xml" }
+    };
+    
     Task<CoreWebView2Environment> CreateEnvironmentAsync()
     {
         var options = new CoreWebView2EnvironmentOptions(_creationProperties.AdditionalBrowserArguments!, _creationProperties.Language!);
@@ -22,11 +30,11 @@ partial class WebView2Core
         var coreWebView2ControllerOptions = environment.CreateCoreWebView2ControllerOptions();
         coreWebView2ControllerOptions.ProfileName = _creationProperties.ProfileName!;
         coreWebView2ControllerOptions.IsInPrivateModeEnabled = _creationProperties.IsInPrivateModeEnabled.GetValueOrDefault();
-
+        
         return coreWebView2ControllerOptions;
     }
-
-    void SetEnvirmentDefaultBackground(Color color) => Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", color.Name);
+    
+    void SetEnvironmentDefaultBackground(Color color) => Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", color.Name);
 
     Task PrepareBlazorWebViewStarting(IVirtualBlazorWebViewProvider provider, CoreWebView2 coreWebView2)
     {
@@ -53,14 +61,70 @@ partial class WebView2Core
     }
 
     private protected string GetHeaderString(IDictionary<string, string> headers) => string.Join(Environment.NewLine, headers.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
-
-    private Task CoreWebView2_WebResourceRequestedAsync(object sender, CoreWebView2WebResourceRequestedEventArgs e)
+    
+    private async Task CoreWebView2_WebResourceRequestedAsync(object sender, CoreWebView2WebResourceRequestedEventArgs e)
     {
-        if (_provider is null)
-            return Task.CompletedTask;
-
         if (_coreWebView2Environment is null)
-            return Task.CompletedTask;
+            return;
+
+        using var deferral = e.GetDeferral();
+        
+        // using var deferral = e.GetDeferral();
+        var requestUri = QueryStringHelper.RemovePossibleQueryString(e.Request.Uri);
+        
+        if (new Uri(requestUri) is Uri uri && AppOriginUri.IsBaseOf(uri))
+        {
+            var relativePath = AppOriginUri.MakeRelativeUri(uri).ToString().Replace('/', '\\');
+            var contentType = "text/plain";
+            Stream? contentStream = null;
+            
+            if (relativePath == ProxyRequestPath)
+            {
+                var args = new WebViewRequestEventArgs(e.Request.Uri, e.Request.Content);
+                await OnProxyRequestMessage(args);
+
+                if (args.ResponseStream != null)
+                {
+                    contentType = args.ResponseContentType ?? "text/plain";
+                    contentStream = args.ResponseStream;
+                }
+            }
+            
+            if (contentStream is null)
+            {
+                var args = new WebViewRequestEventArgs(e.Request.Uri, e.Request.Content);
+                HandleAssetRequest(uri, args);
+                
+                contentType = args.ResponseContentType ?? "text/plain";
+                contentStream = args.ResponseStream;
+            }
+
+            if (contentStream is null)
+            {
+                var notFoundContent = "Resource not found (404)";
+                e.Response = _coreWebView2Environment!.CreateWebResourceResponse(
+                    Content: new MemoryStream(),
+                    StatusCode: 404,
+                    ReasonPhrase: "Not Found",
+                    Headers: GetHeaderString(contentType, notFoundContent.Length)
+                );
+            }
+            else
+            {
+                e.Response = _coreWebView2Environment!.CreateWebResourceResponse(
+                    Content: await CopyContentToMemoryStreamAsync(contentStream),
+                    StatusCode: 200,
+                    ReasonPhrase: "OK",
+                    Headers: GetHeaderString(contentType, (int)contentStream.Length)
+                );
+            }
+
+            contentStream?.Dispose();
+        }
+        
+        
+        if (_provider is null)
+            return;
 
         var allowFallbackOnHostPage = e.ResourceContext == CoreWebView2WebResourceContext.Document ||
                                       e.ResourceContext == CoreWebView2WebResourceContext.Other;
@@ -72,16 +136,77 @@ partial class WebView2Core
         };
 
         if (!_provider.PlatformWebViewResourceRequested(this, request, out var response))
-            return Task.CompletedTask;
+            return;
 
         if (response is null)
-            return Task.CompletedTask;
+        {
+            return;
+        }
 
         var headerString = GetHeaderString(response.Headers);
         e.Response = _coreWebView2Environment.CreateWebResourceResponse(response.Content, response.StatusCode, response.StatusMessage, headerString);
-        return Task.CompletedTask;
+        
+        deferral.Complete();
     }
+    
+    private protected static string GetHeaderString(string? contentType, int contentLength) =>
+$@"Content-Type: {contentType}
+Content-Length: {contentLength}
+Access-Control-Allow-Origin: *";
+    
+    private async Task OnProxyRequestMessage(WebViewRequestEventArgs args)
+    {
+        await _callBack.PlatformProxyRequestReceived(args);
+    }
+    
+    private void HandleAssetRequest(Uri uri, WebViewRequestEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_creationProperties.AssetRootFolder))
+        {
+            return;
+        }
+        
+        var req = uri.LocalPath;
+        var filePath = Path.Combine(
+            _creationProperties.AssetRootFolder!,
+            Path.Combine(req.Split('/'))
+        );
 
+        var fileExtension = Path.GetExtension(filePath);
+        
+        if (!MimeTypes.TryGetValue(fileExtension, out var mimeType))
+        {
+            return;
+        }
+        
+        e.ResponseContentType = mimeType;
+        
+        if (File.Exists(filePath))
+        {
+            e.ResponseStream = new MemoryStream(File.ReadAllBytes(filePath));
+            return;
+        }
+        
+        var assembly = _creationProperties.ResourceAssembly;
+
+        if (assembly is null)
+        {
+            return;
+        }
+        
+        filePath = $"{assembly.GetName().Name}.{_creationProperties.AssetRootFolder}{req.Replace('/', '.')}";
+        
+        e.ResponseStream = assembly.GetManifestResourceStream(filePath);
+    }
+    
+    public async Task<MemoryStream> CopyContentToMemoryStreamAsync(Stream content)
+    {
+        var memoryStream = new MemoryStream();
+        await content.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+        return memoryStream;
+    }
+    
     private void CoreWebView2Controller_ZoomFactorChanged(object sender, object e)
     {
     }
@@ -111,6 +236,14 @@ partial class WebView2Core
         try
         {
             await coreWebView2.ExecuteScriptAsync(BlazorScriptHelper.BlazorStaredScript);
+            
+            // Inject a script to handle file drop in your web content
+            await coreWebView2.ExecuteScriptAsync(@"
+                window.handleFileDrop = (filePath) => {
+                    console.log('File dropped: ' + filePath);
+                    // Handle the file drop in your web content
+                };
+            ");
         }
         catch (Exception)
         {
@@ -127,8 +260,26 @@ partial class WebView2Core
             Source = new Uri(e.Source),
             RawArgs = e,
         };
+        
         _callBack.PlatformWebViewMessageReceived(this, message);
         _provider?.PlatformWebViewMessageReceived(this, message);
+
+        try
+        {
+            var filePaths = e.AdditionalObjects
+                .Where(x => x is CoreWebView2File)
+                .Select(x => ((CoreWebView2File)x).Path)
+                .ToList();
+
+            if (filePaths.Any())
+            {
+                _callBack.PlatformWebViewFilesDropped(this, filePaths);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Failed to load files");
+        }
     }
 
     private void CoreWebView2_SourceChanged(object sender, CoreWebView2SourceChangedEventArgs e)

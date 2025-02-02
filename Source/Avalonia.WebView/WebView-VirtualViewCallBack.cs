@@ -34,4 +34,20 @@ partial class WebView
         WebViewNewWindowRequested?.Invoke(sender, arg);
         return true;
     }
+
+    public bool PlatformWebResourceRequestReceived(object? sender, WebViewRequestEventArgs arg)
+    {
+       WebResourceRequestReceived?.Invoke(sender, arg);
+       return true;
+    }
+
+    public Task PlatformProxyRequestReceived(WebViewRequestEventArgs arg)
+    {
+        return ProxyRequestReceived != null ? ProxyRequestReceived?.Invoke(arg)! : Task.CompletedTask;
+    }
+
+    public void PlatformWebViewFilesDropped(object? sender, List<string> filePaths)
+    {
+        WebViewFilesDropped?.Invoke(sender, filePaths);
+    }
 }

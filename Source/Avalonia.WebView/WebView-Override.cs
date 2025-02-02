@@ -1,4 +1,6 @@
-﻿namespace AvaloniaWebView;
+﻿using Avalonia.Input;
+
+namespace AvaloniaWebView;
 
 partial class WebView
 {
@@ -32,6 +34,8 @@ partial class WebView
             config.ProfileName = _creationProperties.ProfileName;
             config.IsInPrivateModeEnabled = _creationProperties.IsInPrivateModeEnabled;
             config.DefaultWebViewBackgroundColor = _creationProperties.DefaultWebViewBackgroundColor;
+            config.AssetRootFolder = _creationProperties.AssetRootFolder;
+            config.ResourceAssembly = _creationProperties.ResourceAssembly;
         });
 
         if (viewHandler is null)
@@ -43,7 +47,7 @@ partial class WebView
         //Child = control;
         _partInnerContainer.Child = control;
         _platformWebView = viewHandler.PlatformWebView;
-
+        
         await Navigate(Url);
         await NavigateToString(HtmlContent);
     }

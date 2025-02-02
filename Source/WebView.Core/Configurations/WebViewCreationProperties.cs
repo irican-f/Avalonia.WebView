@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Reflection;
 
 namespace WebViewCore.Configurations;
 public class WebViewCreationProperties
@@ -22,4 +23,8 @@ public class WebViewCreationProperties
     public bool? IsInPrivateModeEnabled { get; set; } = default;
 
     public Color DefaultWebViewBackgroundColor { get; set; } = Color.Transparent;
+    
+    public string? AssetRootFolder { get; set; }
+    
+    public Assembly? ResourceAssembly { get; set; }
 }

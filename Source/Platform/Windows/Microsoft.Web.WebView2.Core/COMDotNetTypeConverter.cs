@@ -135,7 +135,12 @@ namespace Microsoft.Web.WebView2.Core
             List<object> list = new List<object>(Convert.ToInt32(rawObjectCollection.Count));
             for (uint num = 0u; num < rawObjectCollection.Count; num++)
             {
-                list.Add(Marshal.GetObjectForIUnknown((dynamic)rawObjectCollection.GetValueAtIndex(num)));
+                
+                object comObject = rawObjectCollection.GetValueAtIndex(num);
+                IntPtr unknownPtr = Marshal.GetIUnknownForObject(comObject);
+                object obj = Marshal.GetObjectForIUnknown(unknownPtr);
+                
+                list.Add(new CoreWebView2File(obj));
             }
 
             return new ReadOnlyCollection<object>(list);
