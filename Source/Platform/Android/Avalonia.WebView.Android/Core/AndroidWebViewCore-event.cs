@@ -23,5 +23,10 @@ partial class AndroidWebViewCore
     {
 
     }
+
+    private void RegisterWebViewEvents(AndroidWebView webview)
+    {
+        
+    }
 }
 

@@ -21,7 +21,8 @@ partial class AndroidWebViewCore
 
 
         }));
-        throw new NotImplementedException();
+        
+        return Task.FromResult(string.Empty)!;
     }
 
     bool IWebViewControl.GoBack()
@@ -66,13 +67,14 @@ partial class AndroidWebViewCore
         var bRet = await PrepareBlazorWebViewStarting(webView, _provider);
         if (!bRet)
         {
-            _webViewClient = new WebViewClient();
+            _webViewClient = new CustomWebViewClient(_creationProperties, _callBack);
             _webChromeClient = new WebChromeClient();
             webView.SetWebViewClient(_webViewClient);
             webView.SetWebChromeClient(_webChromeClient);
         }
         IsInitialized = true;
         _callBack.PlatformWebViewCreated(this, new WebViewCreatedEventArgs { IsSucceed = true });
+        RegisterWebViewEvents(webView);
 
         return true;
     }
