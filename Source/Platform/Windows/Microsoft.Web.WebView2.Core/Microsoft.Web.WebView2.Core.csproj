@@ -3,6 +3,8 @@
 	<PropertyGroup>
 		<TargetFramework>$(MiniVersionTargetFramework)</TargetFramework>
 		<Nullable>annotations</Nullable>
+		<Configurations>Debug;Release;SteamPlaytestDebug;SteamPlaytestRelease</Configurations>
+		<Platforms>AnyCPU</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -2,7 +2,8 @@
 
 public partial class WebView2Core : IPlatformWebView<WebView2Core>
 {
-    public WebView2Core(ViewHandler handler, IVirtualWebViewControlCallBack callback, IVirtualBlazorWebViewProvider? provider, WebViewCreationProperties webViewCreationProperties)
+    public WebView2Core(ViewHandler handler, IVirtualWebViewControlCallBack callback,
+        IVirtualBlazorWebViewProvider? provider, WebViewCreationProperties webViewCreationProperties)
     {
         _hwndTaskSource = new();
         _callBack = callback;
@@ -37,6 +38,7 @@ public partial class WebView2Core : IPlatformWebView<WebView2Core>
     bool _isBlazorWebView = false;
 
     bool _isInitialized = false;
+
     public bool IsInitialized
     {
         get => Volatile.Read(ref _isInitialized);
@@ -44,15 +46,16 @@ public partial class WebView2Core : IPlatformWebView<WebView2Core>
     }
 
     bool _isDisposed = false;
+
     public bool IsDisposed
     {
         get => Volatile.Read(ref _isDisposed);
         private set => Volatile.Write(ref _isDisposed, value);
     }
- 
+
     CoreWebView2Environment? _coreWebView2Environment { get; set; }
     CoreWebView2Controller? _coreWebView2Controller { get; set; }
-    CoreWebView2CompositionController? _coreWebView2CompositionController { get; set; }
+    // CoreWebView2CompositionController? _coreWebView2CompositionController { get; set; }
     CoreWebView2ControllerOptions? _controllerOptions { get; set; }
 
     [Browsable(false)]

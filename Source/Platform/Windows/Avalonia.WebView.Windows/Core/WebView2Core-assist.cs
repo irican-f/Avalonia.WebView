@@ -2,7 +2,6 @@
 
 partial class WebView2Core
 {
-
     void VerifyNotDisposed()
     {
         if (IsDisposed)
@@ -12,13 +11,15 @@ partial class WebView2Core
     private void VerifyBrowserNotCrashed()
     {
         if (_browserCrashed)
-            throw new InvalidOperationException("The WebView control is no longer valid because the browser process crashed.To work around this, please listen for the CoreWebView2.ProcessFailed event to explicitly manage the lifetime of the WebView2 control in the event of a browser failure.https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.processfailed");
+            throw new InvalidOperationException(
+                "The WebView control is no longer valid because the browser process crashed.To work around this, please listen for the CoreWebView2.ProcessFailed event to explicitly manage the lifetime of the WebView2 control in the event of a browser failure.https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.processfailed");
     }
 
     private void VerifyCoreWebView2()
     {
         if (CoreWebView2 == null)
-            throw new InvalidOperationException("Attempted to use WebView2 functionality which requires its CoreWebView2 prior to the CoreWebView2 being initialized.  Call EnsureCoreWebView2Async or set the Source property first.");
+            throw new InvalidOperationException(
+                "Attempted to use WebView2 functionality which requires its CoreWebView2 prior to the CoreWebView2 being initialized.  Call EnsureCoreWebView2Async or set the Source property first.");
     }
 
     void ReparentController(CoreWebView2Controller coreWebView2Controller, IntPtr hwnd, bool sync = true)
@@ -63,7 +64,8 @@ partial class WebView2Core
         if (topLevel is not null)
             scale = topLevel.RenderScaling;
 
-        coreWebView2Controller.Bounds = new Rectangle(0, 0, Convert.ToInt32(_handler.Bounds.Width * scale), Convert.ToInt32(_handler.Bounds.Height * scale));
+        coreWebView2Controller.Bounds = new Rectangle(0, 0, Convert.ToInt32(_handler.Bounds.Width * scale),
+            Convert.ToInt32(_handler.Bounds.Height * scale));
         coreWebView2Controller.NotifyParentWindowPositionChanged();
 
         return;
@@ -78,5 +80,4 @@ partial class WebView2Core
         coreWebView2.Settings.AreDefaultContextMenusEnabled = _creationProperties.AreDefaultContextMenusEnabled;
         coreWebView2.Settings.IsStatusBarEnabled = _creationProperties.IsStatusBarEnabled;
     }
- 
 }

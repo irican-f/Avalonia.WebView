@@ -32,20 +32,19 @@ partial class WebView2Core
             {
                 CoreWebView2Environment environment3 = environment2;
                 CoreWebView2Controller coreWebView2Controller = await environment3.CreateCoreWebView2ControllerAsync(intPtr, options).ConfigureAwait(true);
-                CoreWebView2CompositionController coreWebView2CompositionController = await environment3.CreateCoreWebView2CompositionControllerAsync(intPtr, options);
+                // CoreWebView2CompositionController coreWebView2CompositionController = await environment3.CreateCoreWebView2CompositionControllerAsync(intPtr, options);
                 _coreWebView2Controller = coreWebView2Controller;
-                _coreWebView2CompositionController = coreWebView2CompositionController;
+                // _coreWebView2CompositionController = coreWebView2CompositionController;
                 _controllerOptions = options;
             }
             else
             {
                 CoreWebView2Environment environment3 = environment2;
-                CoreWebView2Controller coreWebView2Controller = await environment3.CreateCoreWebView2ControllerAsync(intPtr).ConfigureAwait(true);
-                CoreWebView2CompositionController coreWebView2CompositionController = await environment3.CreateCoreWebView2CompositionControllerAsync(intPtr);
+                CoreWebView2Controller coreWebView2Controller =
+                    await environment3.CreateCoreWebView2ControllerAsync(intPtr).ConfigureAwait(true);
                 _coreWebView2Controller = coreWebView2Controller;
-                _coreWebView2CompositionController = coreWebView2CompositionController;
             }
-            
+
             var coreWebView2 = _coreWebView2Controller.CoreWebView2;
             if (coreWebView2 is null)
                 throw new ArgumentNullException(nameof(coreWebView2), "coreWebView2 is null!");
@@ -56,7 +55,6 @@ partial class WebView2Core
             }
             catch (NotImplementedException)
             {
-
             }
 
             ResetWebViewSize(_coreWebView2Controller);
@@ -72,7 +70,7 @@ partial class WebView2Core
 
             if (_provider is not null)
                 await PrepareBlazorWebViewStarting(_provider, coreWebView2).ConfigureAwait(true);
-  
+
             IsInitialized = true;
 
             _callBack.PlatformWebViewCreated(this, new WebViewCreatedEventArgs { IsSucceed = true });
@@ -80,7 +78,8 @@ partial class WebView2Core
         }
         catch (Exception ex2)
         {
-            _callBack.PlatformWebViewCreated(this, new WebViewCreatedEventArgs { IsSucceed = false, Message = ex2.ToString() });
+            _callBack.PlatformWebViewCreated(this,
+                new WebViewCreatedEventArgs { IsSucceed = false, Message = ex2.ToString() });
         }
 
         return false;
@@ -135,7 +134,7 @@ partial class WebView2Core
             return false;
 
         coreWebView2.NavigateToString(htmlContent);
-        return true;    
+        return true;
     }
 
     bool IWebViewControl.OpenDevToolsWindow()
@@ -145,7 +144,7 @@ partial class WebView2Core
             return false;
 
         coreWebView2.OpenDevToolsWindow();
-        return true;    
+        return true;
     }
 
     async Task<string?> IWebViewControl.ExecuteScriptAsync(string javaScript)
@@ -222,15 +221,13 @@ partial class WebView2Core
                 }
                 catch (Exception)
                 {
-
                 }
 
                 _controllerOptions = null;
                 _coreWebView2Controller = null;
-                _coreWebView2CompositionController = null;
                 _coreWebView2Environment = null;
             }
- 
+
             IsDisposed = true;
         }
     }
