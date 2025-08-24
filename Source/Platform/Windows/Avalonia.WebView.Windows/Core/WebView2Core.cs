@@ -23,7 +23,14 @@ public partial class WebView2Core : IPlatformWebView<WebView2Core>
 
     ~WebView2Core()
     {
-        Dispose(disposing: false);
+        try
+        {
+            Dispose(disposing: false);
+        }
+        catch (Exception)
+        {
+            // Ignore exceptions in finalizer
+        }
     }
 
     readonly IVirtualBlazorWebViewProvider? _provider;
@@ -63,9 +70,27 @@ public partial class WebView2Core : IPlatformWebView<WebView2Core>
     {
         get
         {
-            VerifyNotDisposed();
-            VerifyBrowserNotCrashed();
-            return _coreWebView2Controller?.CoreWebView2;
+            try
+            {
+                VerifyNotDisposed();
+                VerifyBrowserNotCrashed();
+                return _coreWebView2Controller?.CoreWebView2;
+            }
+            catch (InvalidCastException ex) when (ex.HResult == -2147467262)
+            {
+                // CoreWebView2 members can only be accessed from the UI thread
+                return null;
+            }
+            catch (COMException ex) when (ex.HResult == -2147019873)
+            {
+                // CoreWebView2 members cannot be accessed after the WebView2 control is disposed
+                return null;
+            }
+            catch (Exception)
+            {
+                // Handle any other COM interface exceptions
+                return null;
+            }
         }
     }
 }

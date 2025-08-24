@@ -55,6 +55,11 @@ partial class WebView2Core
             }
             catch (NotImplementedException)
             {
+                // Ignore if this feature is not implemented
+            }
+            catch (Exception)
+            {
+                // Ignore other exceptions for this property
             }
 
             ResetWebViewSize(_coreWebView2Controller);
@@ -78,6 +83,22 @@ partial class WebView2Core
         }
         catch (Exception ex2)
         {
+            // Clean up any partially initialized resources
+            try
+            {
+                if (_coreWebView2Controller != null)
+                {
+                    _coreWebView2Controller.Close();
+                    _coreWebView2Controller = null;
+                }
+                _coreWebView2Environment = null;
+                _controllerOptions = null;
+            }
+            catch (Exception)
+            {
+                // Ignore cleanup exceptions
+            }
+
             _callBack.PlatformWebViewCreated(this,
                 new WebViewCreatedEventArgs { IsSucceed = false, Message = ex2.ToString() });
         }
@@ -215,12 +236,56 @@ partial class WebView2Core
             {
                 try
                 {
-                    ClearBlazorWebViewCompleted(CoreWebView2!);
-                    UnregisterWebViewEvents(_coreWebView2Controller!);
+                    // Clear Blazor WebView completed handlers
+                    if (CoreWebView2 != null)
+                    {
+                        ClearBlazorWebViewCompleted(CoreWebView2);
+                    }
+                    
+                    // Unregister WebView events
+                    if (_coreWebView2Controller != null)
+                    {
+                        UnregisterWebViewEvents(_coreWebView2Controller);
+                    }
+                    
+                    // Unregister general events
                     UnregisterEvents();
+                    
+                    // Close the WebView2 controller if it's still valid
+                    if (_coreWebView2Controller != null)
+                    {
+                        try
+                        {
+                            // Ensure we're on the UI thread for WebView2 operations
+                            if (Dispatcher.UIThread.CheckAccess())
+                            {
+                                _coreWebView2Controller.Close();
+                            }
+                            else
+                            {
+                                // If not on UI thread, post the operation
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    try
+                                    {
+                                        _coreWebView2Controller?.Close();
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // Ignore exceptions during disposal
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // Ignore exceptions during disposal
+                        }
+                    }
                 }
                 catch (Exception)
                 {
+                    // Ignore exceptions during disposal
                 }
 
                 _controllerOptions = null;
@@ -240,7 +305,49 @@ partial class WebView2Core
 
     ValueTask IAsyncDisposable.DisposeAsync()
     {
-        ((IDisposable)this)?.Dispose();
+        try
+        {
+            // First dispose synchronously
+            ((IDisposable)this)?.Dispose();
+            
+            // Then handle any remaining async cleanup
+            if (_coreWebView2Controller != null)
+            {
+                try
+                {
+                    // Ensure we're on the UI thread for WebView2 operations
+                    if (Dispatcher.UIThread.CheckAccess())
+                    {
+                        // Close the controller synchronously if possible
+                        _coreWebView2Controller.Close();
+                    }
+                    else
+                    {
+                        // If not on UI thread, post the operation
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            try
+                            {
+                                _coreWebView2Controller?.Close();
+                            }
+                            catch (Exception)
+                            {
+                                // Ignore exceptions during disposal
+                            }
+                        });
+                    }
+                }
+                catch (Exception)
+                {
+                    // Ignore exceptions during disposal
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Ignore exceptions during disposal
+        }
+        
         return new ValueTask();
     }
 }

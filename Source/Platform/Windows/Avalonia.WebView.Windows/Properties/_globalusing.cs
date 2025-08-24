@@ -3,6 +3,7 @@ global using Microsoft.Web.WebView2.Core;
 global using WebViewCore;
 global using Avalonia.Platform;
 global using Avalonia.Controls;
+global using Avalonia.Threading;
 global using Avalonia.WebView.Windows.Core;
 global using System.Runtime.InteropServices;
 global using WebViewCore.Configurations;
