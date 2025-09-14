@@ -12,6 +12,10 @@ partial class WebView2Core
         { ".css", "text/css" },
         { ".ttf", "font/ttf" },
         { ".png", "image/png" },
+        { ".jpg", "image/jpeg" },
+        { ".jpeg", "image/jpeg" },
+        { ".gif", "image/gif" },
+        { ".webp", "image/webp" },
         { ".svg", "image/svg+xml" }
     };
     
@@ -76,6 +80,7 @@ partial class WebView2Core
         {
             var relativePath = AppOriginUri.MakeRelativeUri(uri).ToString().Replace('/', '\\');
             var contentType = "text/plain";
+            var additionalHeaders = string.Empty;
             Stream? contentStream = null;
             
             if (relativePath == ProxyRequestPath)
@@ -97,6 +102,7 @@ partial class WebView2Core
                 
                 contentType = args.ResponseContentType ?? "text/plain";
                 contentStream = args.ResponseStream;
+                additionalHeaders = args.ResponseHeaders;
             }
 
             if (contentStream is null)
@@ -115,7 +121,7 @@ partial class WebView2Core
                     Content: await CopyContentToMemoryStreamAsync(contentStream),
                     StatusCode: 200,
                     ReasonPhrase: "OK",
-                    Headers: GetHeaderString(contentType, (int)contentStream.Length)
+                    Headers: GetHeaderString(contentType, (int)contentStream.Length, additionalHeaders)
                 );
             }
 
@@ -149,10 +155,26 @@ partial class WebView2Core
         deferral.Complete();
     }
     
-    private protected static string GetHeaderString(string? contentType, int contentLength) =>
+    private protected static string GetHeaderString(string? contentType, int contentLength, string? additionalHeaders = null) =>
 $@"Content-Type: {contentType}
 Content-Length: {contentLength}
-Access-Control-Allow-Origin: *";
+Access-Control-Allow-Origin: *
+{additionalHeaders}
+";
+
+    private static string GetCacheHeaders(string mimeType, DateTime lastModified, long contentLength)
+    {
+        var lastModifiedStr = lastModified.ToString("R"); // RFC 1123 format
+        var etag = $"\"{lastModified.Ticks:X}\""; // Simple ETag based on last modified time
+        
+        return $@"Content-Type: {mimeType}
+Content-Length: {contentLength}
+Last-Modified: {lastModifiedStr}
+ETag: {etag}
+Cache-Control: public, max-age=31536000, immutable
+Access-Control-Allow-Origin: *
+Accept-Ranges: bytes";
+    }
     
     private async Task OnProxyRequestMessage(WebViewRequestEventArgs args)
     {
@@ -167,6 +189,7 @@ Access-Control-Allow-Origin: *";
         }
         
         var req = uri.LocalPath;
+        var relativePath = req.TrimStart('/');
         var filePath = Path.Combine(
             _creationProperties.AssetRootFolder!,
             Path.Combine(req.Split('/'))
@@ -181,9 +204,17 @@ Access-Control-Allow-Origin: *";
         
         e.ResponseContentType = mimeType;
         
+        // Use file system with WebView2's built-in caching
         if (File.Exists(filePath))
         {
+            var fileInfo = new FileInfo(filePath);
+            var lastModified = fileInfo.LastWriteTimeUtc;
+            
+            // Set cache headers for optimal WebView2 caching
+            var cacheHeaders = GetCacheHeaders(mimeType, lastModified, fileInfo.Length);
+            
             e.ResponseStream = new MemoryStream(File.ReadAllBytes(filePath));
+            e.ResponseHeaders = cacheHeaders;
             return;
         }
         

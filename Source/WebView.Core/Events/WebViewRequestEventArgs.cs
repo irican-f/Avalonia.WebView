@@ -32,4 +32,6 @@ public class WebViewRequestEventArgs : EventArgs
     /// The response stream to be used to respond to the request.
     /// </summary>
     public Stream? ResponseStream { get; set; } = null;
+    
+    public string? ResponseHeaders { get; set; } = null;
 }
