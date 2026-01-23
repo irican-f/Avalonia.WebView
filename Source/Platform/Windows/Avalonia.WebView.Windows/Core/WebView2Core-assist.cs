@@ -1,4 +1,4 @@
-﻿namespace Avalonia.WebView.Windows.Core;
+namespace Avalonia.WebView.Windows.Core;
 
 partial class WebView2Core
 {
@@ -79,5 +79,10 @@ partial class WebView2Core
         coreWebView2.Settings.AreDevToolsEnabled = _creationProperties.AreDevToolEnabled;
         coreWebView2.Settings.AreDefaultContextMenusEnabled = _creationProperties.AreDefaultContextMenusEnabled;
         coreWebView2.Settings.IsStatusBarEnabled = _creationProperties.IsStatusBarEnabled;
+        
+#if !DEBUG
+        // Disable browser shortcuts (F5, Ctrl+R, Ctrl+P, F12, etc.) in release mode
+        coreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+#endif
     }
 }
