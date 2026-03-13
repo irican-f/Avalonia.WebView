@@ -1,4 +1,4 @@
-﻿namespace Avalonia.WebView.Linux.Core;
+namespace Avalonia.WebView.Linux.Core;
 
 partial class LinuxWebViewCore
 {
@@ -36,6 +36,7 @@ partial class LinuxWebViewCore
             }).Result;
             
             RegisterWebViewEvents(WebView);
+            RegisterAppOriginInterception(WebView);
 
             await PrepareBlazorWebViewStarting(_provider, WebView);
 
