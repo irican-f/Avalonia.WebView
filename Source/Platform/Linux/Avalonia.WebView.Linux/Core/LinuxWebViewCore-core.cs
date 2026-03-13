@@ -6,8 +6,9 @@ namespace Avalonia.WebView.Linux.Core;
 
 unsafe partial class LinuxWebViewCore
 {
+    private const string AppScheme = "blastr";
     private static readonly string AppHostAddress = "0.0.0.0";
-    private static readonly string AppOrigin = $"https://{AppHostAddress}/";
+    private static readonly string AppOrigin = $"{AppScheme}://{AppHostAddress}/";
     private static readonly Uri AppOriginUri = new(AppOrigin);
     private const string ProxyRequestPath = "proxy";
 
@@ -32,8 +33,8 @@ unsafe partial class LinuxWebViewCore
 
         var bRet = _dispatcher.InvokeAsync(() =>
         {
-            // Always intercept app-origin requests, independent of Blazor mode/provider.
-            webView.Context.RegisterUriScheme("https", WebView_WebResourceRequest);
+            // Register a custom app scheme to avoid WebKit warnings for special built-in schemes.
+            webView.Context.RegisterUriScheme(AppScheme, WebView_WebResourceRequest);
         }).Result;
     }
 
